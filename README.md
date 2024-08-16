@@ -1,6 +1,8 @@
 <div align="center">
     <h3>Streamflix</h3>
-    [![](https://dcbadge.limes.pink/api/server/dpsjsrDjnV)](https://discord.gg/dpsjsrDjnV)
+        <a href="https://discord.gg/dpsjsrDjnV">
+        <img alt="Discord" src="https://img.shields.io/discord/1274069787462471771?label=discord&color=%235567E3">
+    </a>
 </div>
 
 ## About the project
