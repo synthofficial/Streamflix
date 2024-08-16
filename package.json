@@ -194,8 +194,8 @@
     "webpack-merge": "^5.9.0"
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "Streamflix",
+    "appId": "org.synthofficial.streamflix",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
