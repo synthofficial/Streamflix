@@ -15,26 +15,22 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
-class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
-
 let mainWindow: BrowserWindow | null = null;
-
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
+
+if (process.env.NODE_ENV === 'development') {
+  const devConfigPath = path.join(__dirname, '../../dev-app-update.yml');
+  autoUpdater.updateConfigPath = devConfigPath;
+  autoUpdater.forceDevUpdateConfig = true;
+} else {
+  autoUpdater.updateConfigPath = path.join(__dirname, '../electron-builder.yml');
+}
+
+autoUpdater.logger = log;
 
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
@@ -85,6 +81,9 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
+  //Check for updates
+  autoUpdater.checkForUpdatesAndNotify();
+
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
@@ -108,10 +107,6 @@ const createWindow = async () => {
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });
-
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
 };
 
 ipcMain.on('minimize', () => {
@@ -135,6 +130,15 @@ ipcMain.on('close', () => {
     mainWindow.close();
   }
 })
+
+autoUpdater.on('update-available', () => {
+  mainWindow?.webContents.send('update-available');
+})
+
+autoUpdater.on('update-downloaded', () => {
+  mainWindow?.webContents.send('update-downloaded');
+})
+
 
 /**
  * Add event listeners...
