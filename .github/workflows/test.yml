@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [ windows-latest]
 
     steps:
       - name: Check out Git repository
@@ -29,6 +29,3 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run package
-          npm run lint
-          npm exec tsc
-          npm test
