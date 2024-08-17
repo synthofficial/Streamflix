@@ -49,6 +49,7 @@ const AppContent = () => {
       const newTimeout = setTimeout(async () => {
         try {
           const results = await searchMedia(term);
+          console.log(results[0])
           setSearchResults(results);
         } catch (error) {
           console.error('Error searching media:', error);

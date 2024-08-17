@@ -125,6 +125,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
         source = await getAnimeSource(episode.id);
       }
       if(isTVShow){
+        console.log(`episode id: ${episode.id}, episode: ${episode.number} season: ${selectedSeason}`);
         source = await getEpisodeSource(episode.id, String(media.id));
       }
       if (source) {

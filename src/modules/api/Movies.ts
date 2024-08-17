@@ -115,14 +115,14 @@ export const searchMedia = async (query: string): Promise<SearchResult[]> => {
                     episodes = await Promise.all(
                     await epData.map(async(episode : any) => {
                         if(!episode.id) return;
-                        const absoluteEpisodeId = data.episodes!.find((episodeData : any) => episodeData.number === episode.number)
+                        const absoluteEpisodeId = data.episodes!.find((episodeData : any) => episodeData.number === episode.number && episodeData.season === episode.season);
                         return {
                             id: absoluteEpisodeId?.id,
                             title: episode.name,
                             number: episode.number,
                             season: episode.season,
                             thumbnail: episode.image,
-                            description: episode.summary,
+                            description: episode.summary.replaceAll("<p>", ""),
                         }
                     })
                 )
