@@ -22,6 +22,7 @@ release/app/dist
 release/build
 .erb/dll
 
+.github
 .vscode
 
 .idea
@@ -29,3 +30,6 @@ npm-debug.log.*
 *.css.d.ts
 *.sass.d.ts
 *.scss.d.ts
+bun.lockb
+dev-app-update.yml
+electron-builder.yml
