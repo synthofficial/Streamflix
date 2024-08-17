@@ -2,16 +2,18 @@ appId: com.synthofficial.streamflix
 productName: Streamflix
 copyright: Copyright © 2024 Streamflix
 directories:
-  output: dist
-  buildResources: build
+  output: release
 files:
   - from: .
     filter:
       - package.json
       - app
+win:
+  target: 
+    - target: nsis
+      arch:
+        - x64
 publish:
   provider: github
   owner: synthofficial
   repo: streamflix
-  releaseType: release
-  tag: release
