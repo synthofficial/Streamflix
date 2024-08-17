@@ -13,6 +13,8 @@ import { MediaProvider } from './contexts/MediaContext';
 import { useVideoPlayer, VideoPlayerProvider } from './contexts/VideoPlayerContext';
 import { searchMedia } from '../modules/api/Movies';
 import TitleBar from '../components/TitleBar';
+import { ipcRenderer } from 'electron';
+import UpdateModal from './pages/modals/UpdateModal';
 
 interface SearchResult {
   id: string;
@@ -66,6 +68,13 @@ const AppContent = () => {
     }
   }, [searchTimeout]);
 
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+
+  ipcRenderer.on('update-available', () => {
+    console.warn("update found!")
+    setShowUpdateModal(true)
+  })
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     debouncedSearch(term);
@@ -102,8 +111,8 @@ const AppContent = () => {
             as="header"
             align="center"
             justify="space-between"
-            wrap="wrap"
             padding="1.5rem"
+            height={20}
             bg={bgColor}
             color="white"
           >
@@ -226,6 +235,27 @@ const AppContent = () => {
 export default function App(){
   const [keyColor, setKeyColor] = useState<string>(localStorage.getItem('keyColor') || '#6B46C1'); // Updated to a purple shade
 
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+  const [updateDetails, setUpdateDetails] = useState<any>(null);
+
+  useEffect(() => {
+    const updateListener = (event: Electron.IpcRendererEvent, info: any) => {
+      console.log('Update available:', info);
+      setUpdateDetails(info);
+      setShowUpdateModal(true);
+    };
+  
+    ipcRenderer.on('update-available', updateListener);
+  
+    // Trigger a check for updates
+    ipcRenderer.send('check-for-updates');
+  
+    return () => {
+      ipcRenderer.removeListener('update-available', updateListener);
+    };
+  }, []);
+  
+
   const theme = useMemo(() => {
     const palette = generatePalette(keyColor);
     return extendTheme({
@@ -277,6 +307,7 @@ export default function App(){
     <ChakraProvider theme={theme}>
       <VideoPlayerProvider>
         <MediaProvider>
+          <UpdateModal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} updateDetails={updateDetails} />
           <Box height="100vh" display="flex" flexDirection="column" overflow="hidden">
             <TitleBar />
             <Box flex={1} className="overflow-hidden">

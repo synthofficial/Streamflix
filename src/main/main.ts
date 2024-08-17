@@ -9,11 +9,14 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, ipcRenderer } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+
+autoUpdater.allowDowngrade = true;
+autoUpdater.autoDownload = false;
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -69,7 +72,7 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
-    icon: getAssetPath('icon.png'),
+    icon: getAssetPath('icon.ico'),
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
     webPreferences: {
@@ -81,10 +84,7 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
-  //Check for updates
-  autoUpdater.checkForUpdatesAndNotify();
-
-  mainWindow.on('ready-to-show', () => {
+  mainWindow.webContents.on('did-finish-load', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
@@ -92,7 +92,11 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       mainWindow.show();
+      mainWindow.focus();
     }
+
+    // Check for updates after window is loaded
+    autoUpdater.checkForUpdates();
   });
 
   mainWindow.on('closed', () => {
@@ -131,12 +135,31 @@ ipcMain.on('close', () => {
   }
 })
 
-autoUpdater.on('update-available', () => {
-  mainWindow?.webContents.send('update-available');
+autoUpdater.on('checking-for-update', () => {
+  log.info('Checking for update...')
 })
 
-autoUpdater.on('update-downloaded', () => {
-  mainWindow?.webContents.send('update-downloaded');
+autoUpdater.on('update-available', (info) => {
+  if(!mainWindow) return;
+  mainWindow?.webContents.send('update-available', info)
+})
+autoUpdater.on('update-downloaded', (info) => {
+  autoUpdater.quitAndInstall();
+});
+autoUpdater.on('download-progress', (info) => {
+  if(!mainWindow) return;
+  mainWindow?.webContents.send('downloading', info)
+})
+ipcMain.on("download-update", async () => {
+  await autoUpdater.downloadUpdate();
+})
+
+autoUpdater.on('update-not-available', (info) => {
+  log.info('Update not available.', info)
+})
+
+autoUpdater.on('error', (err) => {
+  log.error('Error in auto-updater. ', err)
 })
 
 
