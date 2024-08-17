@@ -22,7 +22,6 @@ release/app/dist
 release/build
 .erb/dll
 
-.github/workflows
 .vscode
 
 .idea
