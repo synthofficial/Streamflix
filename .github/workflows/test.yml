@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main  # or your default branch
+
 jobs:
   release:
     runs-on: ${{ matrix.os }}
@@ -24,13 +25,7 @@ jobs:
 
       - name: Get version
         id: package_version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
-      - name: Build application
-        run: npm run build
-
-      - name: Package application
-        run: npm run package
+        run: echo "::set-output name=version::$(node -p "require('./package.json').version")"
 
       - name: Update or create release tag
         run: |
@@ -40,7 +35,7 @@ jobs:
           git push origin :refs/tags/release
           git push origin release
 
-      - name: Create Release
+      - name: Create/Update Release
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -51,22 +46,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Build and Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/Streamflix Setup ${{ steps.package_version.outputs.version }}.exe
-          asset_name: Streamflix-Setup-${{ steps.package_version.outputs.version }}.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
-
-      - name: Upload latest.yml
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/latest.yml
-          asset_name: latest.yml
-          asset_content_type: application/yaml
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run package
