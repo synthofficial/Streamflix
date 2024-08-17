@@ -23,6 +23,7 @@ release/build
 .erb/dll
 
 .github/workflows
+.vscode
 
 .idea
 npm-debug.log.*
