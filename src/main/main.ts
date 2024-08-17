@@ -27,7 +27,7 @@ if (process.env.NODE_ENV === 'development') {
   autoUpdater.updateConfigPath = devConfigPath;
   autoUpdater.forceDevUpdateConfig = true;
 } else {
-  autoUpdater.updateConfigPath = path.join(__dirname, '../electron-builder.yml');
+  autoUpdater.updateConfigPath = path.join(__dirname, '../../electron-builder.yml');
 }
 
 autoUpdater.logger = log;
