@@ -25,15 +25,16 @@ if (process.env.NODE_ENV === 'production') {
   sourceMapSupport.install();
 }
 
-if (process.env.NODE_ENV === 'development') {
-  const devConfigPath = path.join(__dirname, '../../dev-app-update.yml');
-  autoUpdater.updateConfigPath = devConfigPath;
-  autoUpdater.forceDevUpdateConfig = true;
+let updateConfigPath: string;
+
+if (app.isPackaged) {
+  updateConfigPath = path.join(process.resourcesPath, 'app-update.yml');
 } else {
-  autoUpdater.updateConfigPath = path.join(__dirname, '../../electron-builder.yml');
+  updateConfigPath = path.join(__dirname, '..', '..', 'electron-builder.yml');
 }
 
 autoUpdater.logger = log;
+autoUpdater.updateConfigPath = updateConfigPath;
 
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';

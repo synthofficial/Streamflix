@@ -194,7 +194,14 @@
     "files": [
       "dist",
       "node_modules",
-      "package.json"
+      "package.json",
+      "electron-builder.yml"
+    ],
+    "extraFiles": [
+      {
+        "from": ".",
+        "filter": ["electron-builder.yml"]
+      }
     ],
     "mac": {
       "sign": ".erb/scripts/notarize.js",
