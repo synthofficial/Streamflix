@@ -119,8 +119,8 @@ const TopCarousel: React.FC<Props> = ({ onPlayClick }) => {
                   {media.description.slice(0, 200) + "..."}
                 </Text>
                 <div className="flex flex-row gap-2 items-center mt-2">
-                  <Button colorScheme="brand" onClick={handlePlayClick}>Play Now</Button>
-                  <Button bgColor="white" textColor="black">More Info</Button>
+                  <Button colorScheme="brand" onClick={handlePlayClick} borderRadius={"4px"}>Play Now</Button>
+                  <Button bgColor="white" textColor="black" borderRadius={"4px"}>More Info</Button>
                 </div>
               </div>
             </div>

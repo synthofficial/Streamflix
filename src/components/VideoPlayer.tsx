@@ -41,6 +41,36 @@ const VideoPlayer: React.FC = () => {
     const [fullscreen, setFullscreen] = useState<boolean>(false);
     const [showVolume, setShowVolume] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(50);
+    const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
+
+    const handleControlsVisibility = useCallback(() => {
+        setShowControls(true);
+        
+        if (hideTimeout) {
+            clearTimeout(hideTimeout);
+        }
+        
+        const newTimeout = setTimeout(() => {
+            setShowControls(false);
+        }, 3000);
+        
+        setHideTimeout(newTimeout);
+    }, [hideTimeout]);
+
+    useEffect(() => {
+        const handleMouseMove = () => {
+            handleControlsVisibility();
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+            }
+        };
+    }, [handleControlsVisibility, hideTimeout]);
 
     const toast = useToast();
 
@@ -201,7 +231,7 @@ const VideoPlayer: React.FC = () => {
             height="100%"
             zIndex="9999"
             bg="black"
-            onMouseEnter={() => setShowControls(true)}
+            onMouseEnter={() => handleControlsVisibility()}
             onMouseLeave={() => setShowControls(false)}
         >
             <video ref={videoRef} className="w-full h-full object-cover" />

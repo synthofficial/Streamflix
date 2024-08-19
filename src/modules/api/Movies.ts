@@ -122,7 +122,7 @@ export const searchMedia = async (query: string): Promise<SearchResult[]> => {
                             number: episode.number,
                             season: episode.season,
                             thumbnail: episode.image,
-                            description: episode.summary.replaceAll("<p>", ""),
+                            description: episode.summary, 
                         }
                     })
                 )

@@ -214,6 +214,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                       leftIcon={<FaPlay />}
                       colorScheme="brand"
                       size="sm"
+                      borderRadius={"4px"}
                       onClick={() => isMovie ? handlePlayClick() : handleEpisodeClick(episodes[0])}
                     >
                       Play
@@ -231,85 +232,127 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
               </Box>
             </Box>
             {!isMovie && (
-              <Box width="35%" p={4} overflowY="auto" bg={bgColor} borderLeft="1px solid" borderColor="gray.700">
-                <Flex justifyContent="space-between" alignItems="center" mb={4}>
-                  <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                    Episodes
-                  </Text>
-                  <Menu>
-                    <MenuButton
-                    zIndex={9999}
-                      as={Button}
-                      rightIcon={<IoIosArrowDown />}
-                      bg={"#27272a"}
-                      color={"white"}
-                      border={"1px solid"}
-                      borderColor={"brand.500"}
-                      _hover={{ background: "#3f3f46", borderColor: "brand.500" }}
-                      _active={{ background: "#27272a" }}
-                      _focus={{ background: "#18181b" }}
-                    >
-                      {isTVShow 
-                        ? `Season ${selectedSeason}`
-                        : `Episodes ${episodeRanges[selectedRange]?.start}-${episodeRanges[selectedRange]?.end}`
-                      }
-                    </MenuButton>
-                    <MenuList bg={"#27272a"} border={"#3f3f46 1px solid"} zIndex={9999}>
-                      {isTVShow
-                        ? seasons.map((season) => (
-                            <MenuItem
-                              key={season}
-                              onClick={() => setSelectedSeason(season)}
-                              bg={"#27272a"}
-                              _hover={{ background: "#3f3f46" }}
-                            >
-                              Season {season}
-                            </MenuItem>
-                          ))
-                        : episodeRanges.map((range, index) => (
-                            <MenuItem
-                              key={index}
-                              onClick={() => setSelectedRange(index)}
-                              bg={"#27272a"}
-                              _hover={{ background: "#3f3f46" }}
-                            >
-                              Episodes {range.start}-{range.end}
-                            </MenuItem>
-                          ))
-                      }
-                    </MenuList>
-                  </Menu>
-                </Flex>
-                <VStack spacing={2} align="stretch">
-                  {filteredEpisodes.map((episode, index) => (
-                    <Box 
-                      key={episode.id}
-                      p={3}
-                      borderRadius="md"
-                      transition="all 0.2s"
-                      _hover={{ bg: hoverBgColor }}
-                      cursor="pointer"
-                      onClick={() => handleEpisodeClick(episode)}
-                    >
-                      <Flex justify="space-between" align="center">
-                        <HStack spacing={3} width="90%">
-                          <Text fontWeight="bold" color="gray.400" width="10%">
-                            {isTVShow ? episode.number : selectedRange * 30 + index + 1}
+              <Box width="35%" bg="gray.900" borderLeft="1px solid" borderColor="gray.800">
+                <Flex direction="column" height="100%">
+                  <Flex justifyContent="space-between" alignItems="center" p={4} borderBottom="1px solid" borderColor="gray.800">
+                    <Text fontSize="2xl" fontWeight="bold" color="white">
+                      Episodes
+                    </Text>
+                    <Menu>
+                      <MenuButton
+                        as={Button}
+                        rightIcon={<IoIosArrowDown />}
+                        bg="transparent"
+                        color="white"
+                        border="1px solid"
+                        borderColor="gray.600"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                        _active={{ bg: "whiteAlpha.300" }}
+                      >
+                        {isTVShow
+                          ? `Season ${selectedSeason} (${episodes.filter((episode) => episode.season === selectedSeason).length + " Episodes"})`
+                          : `Episodes ${episodeRanges[selectedRange]?.start}-${episodeRanges[selectedRange]?.end}`
+                        }
+                      </MenuButton>
+                      <MenuList bg="gray.800" border="none" boxShadow="dark-lg">
+                        {isTVShow
+                          ? seasons.map((season) => (
+                              <MenuItem
+                                key={season}
+                                onClick={() => setSelectedSeason(season)}
+                                bg="transparent"
+                                _hover={{ bg: "whiteAlpha.200" }}
+                              >
+                                Season {season} <span className="text-gray-400 ml-1">({episodes.filter((episode) => episode.season === season).length + " Episodes"})</span>
+                              </MenuItem>
+                            ))
+                          : episodeRanges.map((range, index) => (
+                              <MenuItem
+                                key={index}
+                                onClick={() => setSelectedRange(index)}
+                                bg="transparent"
+                                _hover={{ bg: "whiteAlpha.200" }}
+                              >
+                                Episodes {range.start}-{range.end}
+                              </MenuItem>
+                            ))
+                        }
+                      </MenuList>
+                    </Menu>
+                  </Flex>
+                  <Box overflowY="auto" flex={1} css={{
+                    '&::-webkit-scrollbar': {
+                      width: '4px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: 'gray.500',
+                      borderRadius: '24px',
+                    },
+                  }}>
+                    {filteredEpisodes.map((episode, index) => (
+                      <Flex
+                        key={episode.id}
+                        p={4}
+                        borderBottom="1px solid"
+                        borderColor="gray.800"
+                        _hover={{ bg: "whiteAlpha.100" }}
+                        cursor="pointer"
+                        onClick={() => handleEpisodeClick(episode)}
+                      >
+                        <Box position="relative" minWidth="160px" height="90px" mr={4}>
+                          <Image
+                            src={episode.thumbnail.medium}
+                            alt={episode.title}
+                            objectFit="cover"
+                            width="100%"
+                            height="100%"
+                            borderRadius="md"
+                          />
+                          <Flex
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            right={0}
+                            bottom={0}
+                            alignItems="center"
+                            justifyContent="center"
+                            bg="blackAlpha.600"
+                            opacity={0}
+                            _hover={{ opacity: 1 }}
+                            transition="opacity 0.2s"
+                            borderRadius="md"
+                          >
+                            <Icon as={FaPlay} color="white" boxSize={6} />
+                          </Flex>
+                          <Box
+                            position="absolute"
+                            top={2}
+                            left={2}
+                            bg="blackAlpha.700"
+                            px={2}
+                            py={1}
+                            borderRadius="md"
+                          >
+                            <Text fontSize="xs" fontWeight="bold" color="white">
+                              {index + 1}
+                            </Text>
+                          </Box>
+                        </Box>
+                        <Flex direction="column" justifyContent="center" flex={1}>
+                          <Text fontWeight="bold" color="white" mb={1}>
+                            {episode.title}
                           </Text>
-                          <VStack align="start" spacing={0} width="90%">
-                            <Text fontWeight="semibold" color={textColor}>
-                              {episode.title}
-                            </Text>
-                            <Text fontSize="sm" color="gray.400" noOfLines={2}>
-                              {episode.description}
-                            </Text>
-                          </VStack>
-                        </HStack>
-                        <Icon as={FaPlay} color="brand.500" boxSize={4} />
+                          <Text fontSize="sm" color="gray.400" noOfLines={2}>
+                            {episode.description}
+                          </Text>
+                        </Flex>
                       </Flex>
-                    </Box>
-                  ))}
-                </VStack>
+                    ))}
+                  </Box>
+                </Flex>
               </Box>
             )}
           </Flex>
