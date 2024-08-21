@@ -18,12 +18,13 @@ I got tired of trying to watch stuff and constantly met with ads, so I made this
             </ul>
         </li>
         <li>
-            <a href="#getting-started">
-                <ul>
-                    <li><a href="#standard-install">Standard Install</a></li>
-                    <li><a href="#developer-install">Developer Install</a></li>
-                </ul>
-            </a>
+            <a href="#getting-started">Getting started
+            <ul>
+                <li><a href="#standard-install">Standard Install</a></li>
+                <li><a href="#developer-install">Developer Install</a></li>
+            </ul>
+        </li>
+        <li>
             <a href="#roadmap">Roadmap</a>
         </li>
     </ol>
