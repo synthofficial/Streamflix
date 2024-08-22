@@ -10,7 +10,7 @@ import SettingsModal from './pages/modals/SettingsModal';
 import MediaModal from './pages/modals/MediaModal';
 import { MediaProvider } from './contexts/MediaContext';
 import { useVideoPlayer, VideoPlayerProvider } from './contexts/VideoPlayerContext';
-import { searchMedia } from '../modules/api/Movies';
+import { getMediaInfo, searchMedia } from '../modules/api/Movies';
 import TitleBar from '../components/TitleBar';
 import { ipcRenderer } from 'electron';
 import UpdateModal from './pages/modals/UpdateModal';
@@ -119,57 +119,54 @@ const AppContent = () => {
               </Flex>
 
               <Flex align="center" flexGrow={1} justifyContent="center" position="relative">
-                <Input
-                  placeholder="Search movies, shows, anime..."
-                  className={`${isSearchFocused ? "scale-105" : "scale-100"} transition-all duration-300`}
-                  bg={inputBgColor}
-                  border={0}
-                  _placeholder={{ color: 'gray.400' }}
-                  maxWidth="400px"
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-
-                />
-                {searchTerm.length > 2 && (searchResults.length > 0 || isSearching) && isSearchFocused && (
-                  <Box
-                    position="absolute"
-                    top="100%"
-                    left="50%"
-                    transform="translateX(-50%)"
-                    width="400px"
-                    bg={inputBgColor}
-                    mt={2}
-                    borderRadius="md"
-                    boxShadow="lg"
-                    zIndex={10}
-                    maxHeight="400px"
-                    overflowY="auto"
-                  >
-                    {isSearching ? (
-                      <Text p={2} color="gray.400">Searching...</Text>
-                    ) : (
-                      searchResults.map((result) => (
-                        <Flex
-                          key={result.id}
-                          p={2}
-                          _hover={{ bg: 'gray.600' }}
-                          cursor="pointer"
-                          onClick={() => handleResultClick(result)}
-                          alignItems="center"
-                        >
-                          <Image src={result.thumbnail} alt={result.title} boxSize="40px" objectFit="cover" mr={3} />
-                          <Box>
-                            <Text fontWeight="bold">{result.title}</Text>
-                            <Text fontSize="sm" color="gray.300">{result.type} • {result.releaseDate}</Text>
-                          </Box>
-                        </Flex>
-                      ))
-                    )}
+        <Input
+          placeholder="Search movies, shows, anime..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+        />
+        {searchTerm.length > 2 && (searchResults.length > 0 || isSearching) && isSearchFocused && (
+          <Box
+            position="absolute"
+            top="100%"
+            left="50%"
+            transform="translateX(-50%)"
+            width="400px"
+            bg="dark.200"
+            mt={2}
+            borderRadius="md"
+            boxShadow="lg"
+            zIndex={10}
+            maxHeight="400px"
+            overflowY="auto"
+          >
+            {isSearching ? (
+              <Text p={2} color="gray.400">Searching...</Text>
+            ) : (
+              searchResults.map((result) => (
+                <Flex
+                  key={result.id}
+                  p={2}
+                  _hover={{ bg: 'gray.600' }}
+                  cursor="pointer"
+                  onClick={() => {
+                    console.log("Result clicked in render:", result.id);
+                    handleResultClick(result);
+                  }}
+                  alignItems="center"
+                >
+                  <Image src={result.thumbnail} alt={result.title} boxSize="40px" objectFit="cover" mr={3} />
+                  <Box>
+                    <Text fontWeight="bold">{result.title}</Text>
+                    <Text fontSize="sm" color="gray.300">{result.type} • {result.releaseDate}</Text>
                   </Box>
-                )}
-              </Flex>
+                </Flex>
+              ))
+            )}
+          </Box>
+        )}
+      </Flex>
 
               <Flex align="center">
                 <Tooltip hasArrow label="Support Server">

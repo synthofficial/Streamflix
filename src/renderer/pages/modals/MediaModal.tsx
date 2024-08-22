@@ -43,6 +43,7 @@ interface MediaModalProps {
 }
 
 const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayClick }) => {
+  console.log(media);
   if (!media) return null;
   const [selectedRange, setSelectedRange] = useState<number>(0);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
@@ -301,7 +302,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                       >
                         <Box position="relative" minWidth="160px" height="90px" mr={4}>
                           <Image
-                            src={episode.thumbnail.medium}
+                            src={episode.image || episode.thumbnail.medium}
                             alt={episode.title}
                             objectFit="cover"
                             width="100%"
@@ -343,7 +344,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                             {episode.title}
                           </Text>
                           <Text fontSize="sm" color="gray.400" noOfLines={2}>
-                            {episode.description}
+                            {episode.description.replace(/<\/?[^>]+(>|$)/g, "")}
                           </Text>
                         </Flex>
                       </Flex>

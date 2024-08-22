@@ -190,7 +190,7 @@ export const getMediaInfo = async (id: string) => {
                         number: episode.number,
                         season: episode.season,
                         thumbnail: episode.image,
-                        description: episode.summary.replaceAll("<p>", ""), 
+                        description: episode.summary, 
                     }
                 }))
 
