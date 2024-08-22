@@ -9,6 +9,7 @@ import { getEpisodeSource } from "../modules/api/Movies";
 import discordRPCManager from "../constants/DiscordRPC";
 import { useVideoPlayer } from "../renderer/contexts/VideoPlayerContext";
 import { getAnimeSource } from "../modules/api/Anime";
+import { getWatchingList, isInWatchingList, isInWatchlist, updateWatchingListMovieTime, updateWatchlistMovieTime } from "../modules/functions";
 
 const convertSecondsToTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -43,6 +44,8 @@ const VideoPlayer: React.FC = () => {
     const [volume, setVolume] = useState<number>(50);
     const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
 
+    const watchingList = getWatchingList();
+
     const handleControlsVisibility = useCallback(() => {
         setShowControls(true);
         
@@ -76,18 +79,31 @@ const VideoPlayer: React.FC = () => {
 
     const playHlsVideo = useCallback((url: string) => {
         if (Hls.isSupported() && videoRef.current) {
-            const hls = new Hls();
+            const hls = new Hls({
+                // Start at a lower quality and switch to higher quality as the buffer builds
+                startLevel: -1, // Start with the lowest level
+                autoStartLoad: true,
+                maxBufferLength: 30,
+                maxBufferSize: 60 * 1000 * 1000, // 60 MB
+                maxBufferHole: 0.5, // Reduce buffer hole to minimize stalls
+                lowLatencyMode: true, // Enable low-latency streaming
+                liveSyncDurationCount: 3, // Sync to the live edge with less delay
+            });
             console.log(url);
             hls.loadSource(url);
             hls.attachMedia(videoRef.current);
 
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 if(videoRef.current){
-                    hls.currentLevel = hls.levels.length - 1;
+                    hls.currentLevel = hls.levels.length - 1; // Automatically switch to the highest quality
                     setHlsData(hls);
                     videoRef.current.play().catch(e => console.error("Playback failed:", e));
                 }
             });
+            
+            if(watchingList.find((m) => m.id == movieData?.id)){
+                videoRef.current.currentTime = getWatchingList().find((m) => m.id == movieData?.id)?.timestamp || 0;
+            }
 
             hls.on(Hls.Events.ERROR, (event, data) => {
                 console.error("HLS error:", event, data);
@@ -112,7 +128,15 @@ const VideoPlayer: React.FC = () => {
         const video = videoRef.current;
         if (!video) return;
 
-        const onTimeUpdate = () => setCurrentTime(convertSecondsToTime(video.currentTime));
+        const onTimeUpdate = () => {
+            setCurrentTime(convertSecondsToTime(video.currentTime));
+            if(isInWatchingList(movieData?.id as string)){
+                updateWatchingListMovieTime(movieData?.id as string, video.currentTime);
+            }
+            if(isInWatchlist(movieData?.id as string)){
+                updateWatchlistMovieTime(movieData?.id as string, video.currentTime);
+            }
+        }
         const onLoadedMetadata = () => setDuration(convertSecondsToTime(video.duration));
         const onPlay = () => setPlaying(true);
         const onPause = () => setPlaying(false);
@@ -183,42 +207,12 @@ const VideoPlayer: React.FC = () => {
                     setCurrentEpisode(nextEpisodeData);
                     setCurrentUrl(source);
                     playHlsVideo(source);
-                    toast({
-                        title: "Next Episode Loaded",
-                        description: "Enjoy watching!",
-                        status: "success",
-                        duration: 3000,
-                        isClosable: true,
-                    });
-                } else {
-                    throw new Error("Failed to fetch episode URL");
                 }
             } catch (error) {
-                console.error("Error changing episode:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to load the next episode. Please try again.",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
+                console.error("Error fetching next episode:", error);
             }
-        } else {
-            toast({
-                title: "End of Series",
-                description: "You've reached the last episode.",
-                status: "warning",
-                duration: 5000,
-                isClosable: true,
-            });
         }
     };
-
-    useEffect(() => {
-        const handleFullscreenChange = () => setFullscreen(!!document.fullscreenElement);
-        document.addEventListener("fullscreenchange", handleFullscreenChange);
-        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    }, []);
 
     if (!showPlayer) return null;
 

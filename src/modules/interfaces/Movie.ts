@@ -13,4 +13,5 @@ interface Movie {
     releaseDate : string;
     type : "Movie";
     thumbnail : string;
+    episodes?: [];
 }

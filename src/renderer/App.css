@@ -55,7 +55,6 @@ body {
   background-color: #171717;
 }
 
-
 video::-webkit-media-controls-fullscreen-button {
   display: none;
 }

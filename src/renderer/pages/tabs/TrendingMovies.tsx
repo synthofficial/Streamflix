@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { getTrendingMovies } from "../../../modules/api/Movies";
+import { getMovieSource, getTrendingMovies } from "../../../modules/api/Movies";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { Badge, Text, useDisclosure, Box, AspectRatio, Skeleton, SkeletonText } from "@chakra-ui/react";
+import { Badge, Text, useDisclosure, Box, AspectRatio, Skeleton, SkeletonText, useToast, IconButton } from "@chakra-ui/react";
 import { FaCalendar, FaClock, FaStar } from "react-icons/fa6";
-import { convertMinutesToHours } from "../../../modules/functions";
+import { addToWatchlist, convertDurationToSeconds, convertMinutesToHours, getWatchlist, isInWatchlist, removeFromWatchlist } from "../../../modules/functions";
 import MediaModal from "../modals/MediaModal";
+import { FaCheck, FaPlus } from "react-icons/fa";
 
 interface TrendingMoviesProps {
     onPlayClick: (media: Movie | Show | Anime) => void;
@@ -16,7 +17,10 @@ const TrendingMovies: React.FC<TrendingMoviesProps> = ({ onPlayClick }) => {
     const [trendingMovies, setTrendingMovies] = useState<Movie[]>([]);
     const [selectedMedia, setSelectedMedia] = useState<Movie | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [watchlistStatus, setWatchlistStatus] = useState<{[key: string]: boolean}>({});
     const { isOpen, onOpen, onClose } = useDisclosure();
+
+    const toast = useToast();
 
     useEffect(() => {
         const loadTrendingMovies = async () => {
@@ -24,6 +28,13 @@ const TrendingMovies: React.FC<TrendingMoviesProps> = ({ onPlayClick }) => {
             try {
                 const movies = await getTrendingMovies();
                 setTrendingMovies(movies);
+
+                const initialStatus = trendingMovies.reduce((acc, movie) => {
+                    acc[movie.id] = isInWatchlist(movie.id);
+                    return acc;
+                }, {} as {[key: string]: boolean});
+                setWatchlistStatus(initialStatus);
+
             } catch (error) {
                 console.error("Error loading trending movies:", error);
             } finally {
@@ -50,6 +61,47 @@ const TrendingMovies: React.FC<TrendingMoviesProps> = ({ onPlayClick }) => {
             onPlayClick(selectedMedia);
         }
     };
+
+const handleWatchlistClick = async (event: React.MouseEvent, movie: Movie) => {
+    event.stopPropagation();
+    const newStatus = !watchlistStatus[movie.id];
+    if (newStatus) {
+        addToWatchlist({
+            id: movie.id,
+            title: movie.title,
+            thumbnail: movie.thumbnail,
+            movieUrl : movie.movieUrl,
+            genres: movie.genres,
+            actors: movie.actors,
+            country: movie.country,
+            cover : movie.cover,
+            rating: movie.rating,
+            production: movie.production,
+            releaseDate: movie.releaseDate,
+            description: movie.description,
+            type: movie.type,
+            finishTimestamp: convertDurationToSeconds(movie.duration) as number,
+            duration: convertMinutesToHours(movie.duration) as string,
+            completed: false,
+            timesWatched: 0
+        });
+        toast({
+            title: "Added to watchlist",
+            status: "success",
+            duration: 2000,
+            isClosable: true
+        });
+    } else {
+        removeFromWatchlist(movie.id);
+        toast({
+            title: "Removed from watchlist",
+            status: "success",
+            duration: 2000,
+            isClosable: true
+        });
+    }
+    setWatchlistStatus(prev => ({...prev, [movie.id]: newStatus}));
+};
 
     const settings = {
         dots: false,
@@ -125,8 +177,8 @@ const TrendingMovies: React.FC<TrendingMoviesProps> = ({ onPlayClick }) => {
             <Slider {...settings}>
                 {isLoading ? renderSkeletons() : (
                     trendingMovies.map((movie) => (
-                        <Box key={movie.title} p={2} onClick={() => handleOpenModal(movie)}>
-                            <Box className="relative group cursor-pointer hover:scale-105 transition-transform duration-300">
+                        <Box key={movie.title} p={2}>
+                            <Box className="relative group cursor-pointer hover:scale-105 transition-transform duration-300" onClick={() => handleOpenModal(movie)}>
                                 <AspectRatio ratio={2/3} maxH="360px" maxW="240px">
                                     <Box
                                         backgroundImage={`url(${movie.thumbnail})`}
@@ -139,6 +191,18 @@ const TrendingMovies: React.FC<TrendingMoviesProps> = ({ onPlayClick }) => {
                                     className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-black/30 rounded-lg"
                                     p={2}
                                 >
+                                    <IconButton
+                                        aria-label="Add to Watchlist"
+                                        icon={isInWatchlist(movie.id) ? <FaCheck /> : <FaPlus />}
+                                        onClick={(e) => handleWatchlistClick(e, movie)}
+                                        _hover={{ bg: "gray.200"}}
+                                        zIndex={10}
+                                        bg={"white"}
+                                        color="black"
+                                        position="absolute"
+                                        top={2}
+                                        right={3}
+                                    />
                                     <Text className={`text-white font-semibold text-center ${movie.title.length > 25 ? "text-xs" : movie.title.length > 10 ? "text-sm" : "text-md"}`}>
                                         {movie.title.length > 25 ? movie.title.substring(0, 25) + "..." : movie.title}
                                     </Text>

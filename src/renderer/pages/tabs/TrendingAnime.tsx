@@ -28,11 +28,13 @@ import {
   Box,
   AspectRatio,
   SkeletonText,
+  useToast,
+  IconButton,
 } from "@chakra-ui/react";
-import { FaCalendar, FaClock, FaPlay, FaStar, FaTv } from "react-icons/fa6";
+import { FaCalendar, FaCheck, FaClock, FaPlay, FaPlus, FaStar, FaTv } from "react-icons/fa6";
 import { MdOutlineNoAdultContent } from "react-icons/md";
 import { getTrendingAnime } from "../../../modules/api/Anime";
-import { convertMinutesToHours } from "../../../modules/functions";
+import { addToWatchlist, convertDurationToSeconds, convertMinutesToHours, isInWatchlist, removeFromWatchlist } from "../../../modules/functions";
 import { IoIosArrowDown } from "react-icons/io";
 import MediaModal from "../modals/MediaModal";
 
@@ -46,6 +48,9 @@ const TrendingAnime : React.FC<Props> = ({ onPlayClick }) => {
   const [selectedRange, setSelectedRange] = useState<number>(0); // 0 index for first range
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [watchlistStatus, setWatchlistStatus] = useState<{[key: string]: boolean}>({});
+
+  const toast = useToast();
 
   useEffect(() => {
     const loadTrendingAnime = async () => {
@@ -53,6 +58,11 @@ const TrendingAnime : React.FC<Props> = ({ onPlayClick }) => {
         const anime = await getTrendingAnime();
         console.log(anime);
         setTrendingAnime(anime);
+        const initialStatus = trendingAnime.reduce((acc, movie) => {
+          acc[movie.id] = isInWatchlist(movie.id as string);
+          return acc;
+      }, {} as {[key: string]: boolean});
+      setWatchlistStatus(initialStatus);
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading trending anime:", error);
@@ -80,6 +90,46 @@ const TrendingAnime : React.FC<Props> = ({ onPlayClick }) => {
     setSelectedMedia(null);
     onClose();
   };
+
+  const handleWatchlistClick = async (event: React.MouseEvent, movie: Anime) => {
+    event.stopPropagation();
+    const newStatus = !watchlistStatus[movie.id];
+    if (newStatus) {
+        addToWatchlist({
+            id: movie.id as string,
+            title: movie.title.english as string,
+            thumbnail: movie.thumbnail,
+            genres: movie.genres,
+            actors: [],
+            country: [],
+            cover : movie.cover,
+            rating: movie.rating,
+            production: movie.production,
+            releaseDate: movie.releaseDate,
+            description: movie.description,
+            type: movie.type,
+            finishTimestamp: convertDurationToSeconds(movie.duration) as number,
+            duration: convertMinutesToHours(movie.duration) as string,
+            completed: false,
+            timesWatched: 0
+        });
+        toast({
+            title: "Added to watchlist",
+            status: "success",
+            duration: 2000,
+            isClosable: true
+        });
+    } else {
+        removeFromWatchlist(movie.id as string);
+        toast({
+            title: "Removed from watchlist",
+            status: "success",
+            duration: 2000,
+            isClosable: true
+        });
+    }
+    setWatchlistStatus(prev => ({...prev, [movie.id]: newStatus}));
+};
 
   const settings = {
     dots: false,
@@ -189,6 +239,18 @@ const TrendingAnime : React.FC<Props> = ({ onPlayClick }) => {
                                     />
                                 </AspectRatio>
                             <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-black/30">
+                            <IconButton
+                                        aria-label="Add to Watchlist"
+                                        icon={isInWatchlist(show.id as string) ? <FaCheck /> : <FaPlus />}
+                                        onClick={(e) => handleWatchlistClick(e, show)}
+                                        _hover={{ bg: "gray.200"}}
+                                        zIndex={10}
+                                        bg={"white"}
+                                        color="black"
+                                        position="absolute"
+                                        top={2}
+                                        right={3}
+                                    />
                               <Text
                                 className={`text-white font-semibold ${
                                   show.title.english!.length > 25

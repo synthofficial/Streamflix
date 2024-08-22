@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import { ChakraProvider, extendTheme, Box, Flex, VStack, IconButton, Input, useColorModeValue, Avatar, Text, Image } from '@chakra-ui/react';
-import { FaBars, FaCog, FaUser } from 'react-icons/fa';
+import { ChakraProvider, extendTheme, Box, Flex, IconButton, Input, useColorModeValue, Avatar, Text, Image, Tooltip } from '@chakra-ui/react';
+import { FaCog, FaDiscord } from 'react-icons/fa';
 import Homepage from './pages/Homepage';
 import { generatePalette } from '../modules/ThemeUtils';
-import Sidebar from '../components/Sidebar';
 import VideoPlayer from '../components/VideoPlayer';
 import ProfileModal from './pages/modals/ProfileModal';
 import SettingsModal from './pages/modals/SettingsModal';
@@ -25,21 +24,18 @@ interface SearchResult {
 }
 
 const AppContent = () => {
-  const [keyColor, setKeyColor] = useState<string>('#6B46C1');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const { showPlayer, currentMedia, currentEpisode, currentUrl, setShowPlayer, setCurrentMedia, setCurrentEpisode, setCurrentUrl } = useVideoPlayer();
 
-  const bgColor = useColorModeValue('gray.800', 'gray.900');
-  const inputBgColor = useColorModeValue('gray.700', 'gray.800');
+  const bgColor = useColorModeValue('dark.100', 'gray.900');
+  const inputBgColor = useColorModeValue('dark.200', 'gray.800');
 
   const debouncedSearch = useCallback((term: string) => {
     if (searchTimeout) {
@@ -117,14 +113,6 @@ const AppContent = () => {
             color="white"
           >
               <Flex align="center" mr={5}>
-                <IconButton
-                  aria-label="Open sidebar"
-                  icon={<FaBars className="text-white" />}
-                  _hover={{ bg: 'gray.700'}}
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  variant="ghost"
-                  mr={3}
-                />
                 <Box fontWeight="bold" fontSize="xl" color="brand.500">
                   Streamflix
                 </Box>
@@ -133,14 +121,18 @@ const AppContent = () => {
               <Flex align="center" flexGrow={1} justifyContent="center" position="relative">
                 <Input
                   placeholder="Search movies, shows, anime..."
+                  className={`${isSearchFocused ? "scale-105" : "scale-100"} transition-all duration-300`}
                   bg={inputBgColor}
                   border={0}
                   _placeholder={{ color: 'gray.400' }}
                   maxWidth="400px"
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+
                 />
-                {searchTerm.length > 2 && (searchResults.length > 0 || isSearching) && (
+                {searchTerm.length > 2 && (searchResults.length > 0 || isSearching) && isSearchFocused && (
                   <Box
                     position="absolute"
                     top="100%"
@@ -180,26 +172,22 @@ const AppContent = () => {
               </Flex>
 
               <Flex align="center">
-                <IconButton
-                  aria-label="Settings"
-                  icon={<FaCog className="text-white" />}
-                  _hover={{ bg: 'gray.700'}}
-                  onClick={() => setIsSettingsOpen(true)}
-                  variant="ghost"
-                  mr={2}
-                />
-                <Avatar
-                  size="sm"
-                  src={localStorage.getItem('avatarUrl') || undefined}
-                  cursor="pointer"
-                  onClick={() => setIsProfileOpen(true)}
-                />
+                <Tooltip hasArrow label="Support Server">
+                  <IconButton
+                    aria-label="Support Server"
+                    icon={<FaDiscord className="text-white" />}
+                    _hover={{ bg: 'dark.200'}}
+                    variant="ghost"
+                    mr={2}
+                    onClick={() => window.open('https://discord.gg/dpsjsrDjnV')}
+                  />
+                </Tooltip>
+
               </Flex>
           </Flex>
         )}
         <Flex flex={1} overflow="hidden">
-          {!showPlayer && <Sidebar isOpen={sidebarOpen} />}
-          <Box flex={1} overflowY="hidden" bg="gray.900">
+          <Box flex={1} overflowY="hidden" bg="dark.100" className={`${isSearchFocused ? "blur-sm transition-all duration-300" : ""}`}>
             <Routes>
               <Route path="/" element={<Homepage />} />
             </Routes>
@@ -220,8 +208,6 @@ const AppContent = () => {
           />
         )}
       </Flex>
-      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} onOpen={() => setIsProfileOpen(true)} />
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onOpen={() => setIsSettingsOpen(true)} />
       <MediaModal
         isOpen={isMediaModalOpen}
         onClose={() => setIsMediaModalOpen(false)}
@@ -237,6 +223,8 @@ export default function App(){
 
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
   const [updateDetails, setUpdateDetails] = useState<any>(null);
+
+
 
   useEffect(() => {
     const updateListener = (event: Electron.IpcRendererEvent, info: any) => {
@@ -261,6 +249,11 @@ export default function App(){
     return extendTheme({
       colors: {
         brand: palette,
+        dark: {
+          100: '#121212',
+          200: '#282828',
+          300: '#3f3f3f'
+        }
       },
       styles: {
         global: {

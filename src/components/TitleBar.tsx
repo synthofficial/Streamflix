@@ -4,7 +4,6 @@ import { FaMinus, FaRegSquare, FaTimes } from 'react-icons/fa';
 import { ipcRenderer } from 'electron';
 
 const TitleBar: React.FC = () => {
-  const bgColor = useColorModeValue('gray.800', 'gray.900');
   const iconColor = useColorModeValue('white', 'gray.200');
 
   const handleMinimize = () => {
@@ -25,7 +24,7 @@ const TitleBar: React.FC = () => {
       align="center"
       justify="space-between"
       px={2}
-      bg={"gray.900"}
+      bg={"dark.200"}
       className="draggable overflow-hidden"
     >
       <Flex marginLeft={'auto'} gap={4}>

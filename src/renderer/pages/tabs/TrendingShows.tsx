@@ -4,10 +4,10 @@ import { getEpisodeSource, getTrendingShows } from "../../../modules/api/Movies"
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { AspectRatio, Badge, Box, Skeleton, SkeletonText, Text, useDisclosure, useToast } from "@chakra-ui/react";
-import { FaCalendar, FaClock, FaPlay, FaStar, FaTv } from "react-icons/fa6";
+import { AspectRatio, Badge, Box, IconButton, Skeleton, SkeletonText, Text, useDisclosure, useToast } from "@chakra-ui/react";
+import { FaCalendar, FaCheck, FaClock, FaPlay, FaPlus, FaStar, FaTv } from "react-icons/fa6";
 import { IoIosArrowDown } from "react-icons/io";
-import { convertMinutesToHours } from "../../../modules/functions";
+import { addToWatchlist, convertDurationToSeconds, convertMinutesToHours, isInWatchlist, removeFromWatchlist } from "../../../modules/functions";
 import "../../App.css"
 import MediaModal from "../modals/MediaModal";
 
@@ -19,6 +19,7 @@ const TrendingShows : React.FC<TrendingShowsProps> = ({ onPlayClick }) => {
   const [trendingShows, setTrendingShows] = useState<Show[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<Show | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [watchlistStatus, setWatchlistStatus] = useState<{[key: string]: boolean}>({});
   const [isLoading, setIsLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -30,6 +31,13 @@ const TrendingShows : React.FC<TrendingShowsProps> = ({ onPlayClick }) => {
         const shows = await getTrendingShows();
         setTrendingShows(shows);
         setIsLoading(false);
+
+        const initialStatus = trendingShows.reduce((acc, movie) => {
+          acc[movie.id] = isInWatchlist(movie.id);
+          return acc;
+      }, {} as {[key: string]: boolean});
+      setWatchlistStatus(initialStatus);
+
       } catch (error) {
         console.error("Error loading trending shows:", error);
       }
@@ -57,6 +65,45 @@ const TrendingShows : React.FC<TrendingShowsProps> = ({ onPlayClick }) => {
       onPlayClick(selectedMedia, episode, episodeUrl);
     }
   }
+
+  const handleWatchlistClick = (event: React.MouseEvent, movie: Show) => {
+    event.stopPropagation();
+    const newStatus = !watchlistStatus[movie.id];
+    if (newStatus) {
+        addToWatchlist({
+            id: movie.id,
+            title: movie.title,
+            thumbnail: movie.thumbnail,
+            cover: movie.cover,
+            description: movie.description,
+            genres: movie.genres,
+            actors: movie.actors,
+            country: movie.country,
+            duration: movie.duration,
+            rating: movie.rating,
+            production: movie.production,
+            releaseDate: movie.releaseDate,
+            episodes: movie.episodes,
+            type: "Show",
+            finishTimestamp: convertDurationToSeconds(movie.duration) as number
+        });
+        toast({
+            title: "Added to watchlist",
+            status: "success",
+            duration: 2000,
+            isClosable: true
+        });
+    } else {
+        removeFromWatchlist(movie.id);
+        toast({
+            title: "Removed from watchlist",
+            status: "success",
+            duration: 2000,
+            isClosable: true
+        });
+    }
+    setWatchlistStatus(prev => ({...prev, [movie.id]: newStatus}));
+};
 
   const settings = {
     dots: false,
@@ -144,6 +191,18 @@ const TrendingShows : React.FC<TrendingShowsProps> = ({ onPlayClick }) => {
                                     />
                                 </AspectRatio>
                   <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-black/30">
+                  <IconButton
+                                        aria-label="Add to Watchlist"
+                                        icon={isInWatchlist(show.id) ? <FaCheck /> : <FaPlus />}
+                                        onClick={(e) => handleWatchlistClick(e, show)}
+                                        _hover={{ bg: "gray.200"}}
+                                        zIndex={10}
+                                        bg={"white"}
+                                        color="black"
+                                        position="absolute"
+                                        top={2}
+                                        right={3}
+                                    />
                     <Text className={`text-white font-semibold ${show.title.length > 25 ? "text-xs" : show.title.length > 10 ? "text-sm" : "text-md"}`}>
                       {show.title.length > 25 ? show.title.substring(0, 25) + "..." : show.title}
                     </Text>

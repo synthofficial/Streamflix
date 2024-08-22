@@ -32,7 +32,7 @@ const TopCarousel: React.FC<Props> = ({ onPlayClick }) => {
           getTopTrendingMovie(),
           getTopTrendingShow(),
         ]);
-        setTopMedia([...movies, ...shows].slice(0, 2));
+        setTopMedia([...movies, ...shows].slice(0, 5));
       } catch (error) {
         console.error("Error loading media:", error);
       } finally {
@@ -86,41 +86,39 @@ const TopCarousel: React.FC<Props> = ({ onPlayClick }) => {
                   alt={media.title}
                   className="h-full w-full object-cover rounded-lg transition-transform duration-300 transform group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent rounded-lg"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent rounded-lg"></div>
               </div>
               <div className="absolute bottom-0 left-0 ml-4 mb-6 z-10 w-[600px]">
-                <Text className="text-white text-3xl font-semibold mb-2">
-                  {media.title}
-                </Text>
-                <div className="flex flex-row gap-1 items-center mb-2">
-                  <Badge variant="outline" colorScheme="brand">
-                    {media.type}
-                  </Badge>
-                  <Badge variant="subtle" colorScheme="yellow">
-                    <div className="flex flex-row gap-1 items-center">
-                      <FaStar />
-                      {media.rating}
+                <div className="flex flex-col">
+                  <Text
+                    className="text-white text-3xl font-bold mb-2"
+                    noOfLines={2}
+                  >
+                    {media.title}
+                  </Text>
+                  <div className="flex flex-row gap-1 items-center mb-2">
+                      <Badge variant="outline" colorScheme="brand">
+                        {media.type}
+                      </Badge>
+                      <Badge variant="subtle" colorScheme="yellow">
+                        <div className="flex flex-row gap-1 items-center">
+                          <FaStar />
+                          {media.rating}
+                        </div>
+                      </Badge>
+                      <Badge variant="subtle" colorScheme="blue">
+                        <div className="flex flex-row gap-1 items-center">
+                          <FaCalendar />
+                          {media.releaseDate}
+                        </div>
+                      </Badge>
+                      <Badge variant="subtle" colorScheme="green">
+                        <div className="flex flex-row gap-1 items-center">
+                          <FaClock />
+                          {convertMinutesToHours(media.duration)}
+                        </div>
+                      </Badge>
                     </div>
-                  </Badge>
-                  <Badge variant="subtle" colorScheme="blue">
-                    <div className="flex flex-row gap-1 items-center">
-                      <FaCalendar />
-                      {media.releaseDate}
-                    </div>
-                  </Badge>
-                  <Badge variant="subtle" colorScheme="green">
-                    <div className="flex flex-row gap-1 items-center">
-                      <FaClock />
-                      {convertMinutesToHours(media.duration)}
-                    </div>
-                  </Badge>
-                </div>
-                <Text className="text-gray-300 text-md font-semibold">
-                  {media.description.slice(0, 200) + "..."}
-                </Text>
-                <div className="flex flex-row gap-2 items-center mt-2">
-                  <Button colorScheme="brand" onClick={handlePlayClick} borderRadius={"4px"}>Play Now</Button>
-                  <Button bgColor="white" textColor="black" borderRadius={"4px"}>More Info</Button>
                 </div>
               </div>
             </div>

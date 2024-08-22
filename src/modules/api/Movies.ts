@@ -154,6 +154,64 @@ export const searchMedia = async (query: string): Promise<SearchResult[]> => {
 
 export const getMediaInfo = async (id: string) => {
     const data = await api.fetchMediaInfo(id);
+    if(data){
+        switch(data.type){
+            case "Movie":
+                return{
+                    id: data.id,
+                    title: data.title as string,
+                    type: "Movie",  // Use the previously defined variable
+                    thumbnail: data.image as string,
+                    releaseDate: data.releaseDate as string,
+                    cover: data.cover as string,
+                    movieUrl: await getMovieSource(data.episodes![0].id, data.id),
+                    description: data.description as string,
+                    genres: data.genres as string[],
+                    actors: data.casts as string[],
+                    country: data.country as string[],
+                    duration: data.duration as string,
+                    rating: data.rating as number ?? "N/A",
+                    production: data.production as string,
+                }
+            case "TV Series":
+
+                let episodes : any = [];
+
+                const tmdbData = await fetchTVSeriesDetails(data.title as string);
+                const epData = await fetchEpisodeDetails(tmdbData.id);
+
+                episodes = await Promise.all(
+                await epData.map(async(episode : any) => {
+                    if(!episode.id) return;
+                    const absoluteEpisodeId = data.episodes!.find((episodeData : any) => episodeData.number === episode.number && episodeData.season === episode.season);
+                    return {
+                        id: absoluteEpisodeId?.id,
+                        title: episode.name,
+                        number: episode.number,
+                        season: episode.season,
+                        thumbnail: episode.image,
+                        description: episode.summary.replaceAll("<p>", ""), 
+                    }
+                }))
+
+                return{
+                    id: data.id,
+                    title: data.title as string,
+                    type: "Show",  // Use the previously defined variable
+                    thumbnail: data.image as string,
+                    releaseDate: data.releaseDate as string,
+                    cover: data.cover as string,
+                    description: data.description as string,
+                    genres: data.genres as string[],
+                    actors: data.casts as string[],
+                    country: data.country as string[],
+                    duration: data.duration as string,
+                    rating: data.rating as number ?? "N/A",
+                    production: data.production as string,
+                    episodes: episodes
+                }
+        }
+    }
     return data;
 };
 
@@ -161,6 +219,7 @@ export const getTopTrendingMovie = async () : Promise<Movie[]> => {
     const movies = await api.fetchTrendingMovies();
 
     const data : Movie[] = [];
+    
     const movieData = await api.fetchMediaInfo(movies[0].id);
     const movieUrl = await getMovieSource(movieData.episodes![0].id, movies[0].id);
 

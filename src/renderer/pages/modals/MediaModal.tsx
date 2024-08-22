@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { FaPlay, FaStar, FaClock, FaCalendar } from 'react-icons/fa';
 import { IoIosArrowDown } from 'react-icons/io';
-import { convertMinutesToHours } from '../../../modules/functions';
+import { convertMinutesToHours, getWatchingList } from '../../../modules/functions';
 import { getEpisodeSource } from '../../../modules/api/Movies';
 import { getAnimeSource } from '../../../modules/api/Anime';
 
@@ -48,6 +48,8 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [episodes, setEpisodes] = useState<any[]>([]);
   const toast = useToast();
+
+  const watchingList = getWatchingList();
 
   console.log(media);
 
@@ -97,12 +99,6 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
     return [];
   }, [episodes, isTVShow]);
 
-
-
-  const bgColor = useColorModeValue('#18181b', 'gray.900');
-  const textColor = useColorModeValue('gray.100', 'gray.50');
-  const hoverBgColor = useColorModeValue('#27272a', 'gray.800');
-
   const handlePlayClick = async() => {
     if (media.type === 'Movie') {
       console.log("loading movie");
@@ -120,13 +116,14 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
     });
 
     try {
-      let source //= await getEpisodeSource(episode.id, String(media.id));
+      let source;
       if(isAnime){
         source = await getAnimeSource(episode.id);
       }
       if(isTVShow){
         console.log(`episode id: ${episode.id}, episode: ${episode.number} season: ${selectedSeason}`);
         source = await getEpisodeSource(episode.id, String(media.id));
+        console.log(source);
       }
       if (source) {
         toast({
@@ -217,7 +214,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                       borderRadius={"4px"}
                       onClick={() => isMovie ? handlePlayClick() : handleEpisodeClick(episodes[0])}
                     >
-                      Play
+                      {watchingList.find((movie) => movie.id === media.id)?.timestamp! > 0 ? 'Continue Watching' : 'Watch Now'}
                     </Button>
                     <VStack align="flex-start" spacing={0}>
                       <Text fontWeight="bold" fontSize="xs">Genres:</Text>
@@ -232,9 +229,9 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
               </Box>
             </Box>
             {!isMovie && (
-              <Box width="35%" bg="gray.900" borderLeft="1px solid" borderColor="gray.800">
+              <Box width="35%" bg="dark.100" borderLeft="1px solid" borderColor="dark.200">
                 <Flex direction="column" height="100%">
-                  <Flex justifyContent="space-between" alignItems="center" p={4} borderBottom="1px solid" borderColor="gray.800">
+                  <Flex justifyContent="space-between" alignItems="center" p={4} borderBottom="1px solid" borderColor="dark.200">
                     <Text fontSize="2xl" fontWeight="bold" color="white">
                       Episodes
                     </Text>
@@ -245,7 +242,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                         bg="transparent"
                         color="white"
                         border="1px solid"
-                        borderColor="gray.600"
+                        borderColor="brand.500"
                         _hover={{ bg: "whiteAlpha.200" }}
                         _active={{ bg: "whiteAlpha.300" }}
                       >
@@ -254,7 +251,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                           : `Episodes ${episodeRanges[selectedRange]?.start}-${episodeRanges[selectedRange]?.end}`
                         }
                       </MenuButton>
-                      <MenuList bg="gray.800" border="none" boxShadow="dark-lg">
+                      <MenuList bg="dark.200" border="none" boxShadow="dark-lg">
                         {isTVShow
                           ? seasons.map((season) => (
                               <MenuItem
@@ -297,7 +294,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                         key={episode.id}
                         p={4}
                         borderBottom="1px solid"
-                        borderColor="gray.800"
+                        borderColor="dark.200"
                         _hover={{ bg: "whiteAlpha.100" }}
                         cursor="pointer"
                         onClick={() => handleEpisodeClick(episode)}
