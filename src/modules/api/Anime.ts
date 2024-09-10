@@ -6,7 +6,6 @@ import { fetchAnimeOrShowById } from "./Anilist";
 import { ANIME_BASE_URL } from "../../constants/API";
 
 const api = new Anilist();
-const sources = new Gogoanime();
 
 export const getAnimeSource = async (episodeId: string) => {
     console.log("lets get source for episode: " + episodeId);
@@ -22,6 +21,61 @@ export const fetchEpisodeInfo = async (id: string) => {
     return data;
   }
   
+export const searchAnime = async (query: string) => {
+    const response = await api.search(query, 1);
+
+    const data: Anime[] = await Promise.all(
+        response.results[0].map(async (anime : any) => {
+            // Fetch basic anime data
+            const animeData = await api.fetchAnimeInfo(anime.id);
+            console.log(animeData)
+            // Fetch detailed episode information
+            const anilistData = await fetchEpisodeInfo(anime.id);
+            // Extract the title object
+            const title: ITitle = animeData.title as ITitle;
+
+            // Combine episode data from both sources
+            const combinedEpisodes = animeData.episodes?.map((ep: any, index: number) => {
+                const anilistEp = anilistData.episodes[index + 1];
+                return {
+                    id: ep.id,
+                    absoluteEpisodeNumber: index,
+                    number: ep.number,
+                    title: anilistEp?.title?.en,
+                    description: anilistEp?.overview,
+                    image: anilistEp?.image || '',
+                    releaseDate: anilistEp?.airDate || '',
+                };
+            }) || [];
+
+            // Return an object conforming to the Anime type
+            return {
+                title: {
+                    english: title.english as string,
+                },
+                episodes: combinedEpisodes,
+                id: animeData.id as string,
+                production: animeData.studios![0] as string,
+                genres: animeData.genres as string[],
+                description: animeData.description?.replaceAll("<br>", "").replaceAll("</br>", "") as string,
+                duration: `${animeData.duration} min`,
+                totalEpisodes: animeData.totalEpisodes as number,
+                hasSub: animeData.hasSub as boolean,
+                hasDub: animeData.hasDub as boolean,
+                isAdult: animeData.isAdult as boolean,
+                season: animeData.season as string,
+                cover: animeData.cover as string,
+                trailer: animeData.trailer?.site as string,
+                releaseDate: `${animeData.startDate?.year}-${animeData.startDate?.month}-${animeData.startDate?.day}`,
+                endDate: `${animeData.endDate?.year}-${animeData.endDate?.month}-${animeData.endDate?.day}`,
+                thumbnail: animeData.image as string,
+                rating: animeData.rating as number,
+                status: animeData.status as string,
+                type: "Anime",
+            };
+        })
+    );
+}
 
   export const getTrendingAnime = async(): Promise<Anime[]> => {
     // Fetch popular anime

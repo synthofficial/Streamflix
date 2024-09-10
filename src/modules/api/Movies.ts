@@ -5,6 +5,8 @@ import Goku from "@consumet/extensions/dist/providers/movies/goku";
 
 import axios from "axios";
 import { IMovieResult, ISearch } from "@consumet/extensions";
+import { fetchAnimeOrShowById } from "./Anilist";
+import { searchAnime } from "./Anime";
 
 const api = new MovieHdWatch();
 const flix = new FlixHQ();
@@ -109,23 +111,28 @@ export const searchMedia = async (query: string): Promise<SearchResult[]> => {
                 let episodes : any = [];
 
                 if(type == "Show"){
-                    const tmdbData = await fetchTVSeriesDetails(data.title as string);
-                    const epData = await fetchEpisodeDetails(tmdbData.id);
-    
-                    episodes = await Promise.all(
-                    await epData.map(async(episode : any) => {
-                        if(!episode.id) return;
-                        const absoluteEpisodeId = data.episodes!.find((episodeData : any) => episodeData.number === episode.number && episodeData.season === episode.season);
-                        return {
-                            id: absoluteEpisodeId?.id,
-                            title: episode.name,
-                            number: episode.number,
-                            season: episode.season,
-                            thumbnail: episode.image,
-                            description: episode.summary, 
-                        }
-                    })
-                )
+                    if(data.genres?.includes("Animation") && data.country == "Japan"){
+                        const animeData = await searchAnime(result.title as string);
+                        console.log(animeData);
+                    }else{
+                        const tmdbData = await fetchTVSeriesDetails(data.title as string);
+                        const epData = await fetchEpisodeDetails(tmdbData.id);
+        
+                        episodes = await Promise.all(
+                        await epData.map(async(episode : any) => {
+                            if(!episode.id) return;
+                            const absoluteEpisodeId = data.episodes!.find((episodeData : any) => episodeData.number === episode.number && episodeData.season === episode.season);
+                            return {
+                                id: absoluteEpisodeId?.id,
+                                title: episode.name,
+                                number: episode.number,
+                                season: episode.season,
+                                thumbnail: episode.image,
+                                description: episode.summary, 
+                            }
+                        })
+                    )
+                    }
                 }
     
                 return {

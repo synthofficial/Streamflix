@@ -9,14 +9,13 @@ import MediaModal from "../modals/MediaModal";
 import { FaCalendar, FaCheck, FaClock, FaStar } from "react-icons/fa";
 
 interface Props {
-    onPlayClick: (media: Movie | Show | Anime) => void;
+    onPlayClick: (media: Movie | Show | Anime, episodeData?: any, episodeUrl?: string) => void;
 }
 
 const ContinueWatching: React.FC<Props> = ({ onPlayClick }) => {
     const [watchingList, setWatchingList] = useState<WatchlistItem[]>(getWatchingList());
     console.log(watchingList)
     const [selectedMedia, setSelectedMedia] = useState<Movie | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     const toast = useToast();
@@ -34,12 +33,13 @@ const ContinueWatching: React.FC<Props> = ({ onPlayClick }) => {
         onClose();
     }
 
-    const handlePlayClick = () => {
+    const handlePlayClick = (selectedMedia?: any, episode?: any, episodeUrl?: any) => {
         onClose();
+        console.log(episodeUrl);
         if (selectedMedia) {
-            onPlayClick(selectedMedia);
+          onPlayClick(selectedMedia, episode, episodeUrl);
         }
-    };
+      }
 
     const handleMarkAsComplete = (e: React.MouseEvent, media: any) => {
         e.stopPropagation();
@@ -157,20 +157,22 @@ const ContinueWatching: React.FC<Props> = ({ onPlayClick }) => {
                                         </Badge>
                                     </Box>
                                 </Box>
-                                <Progress
-                                        position="absolute"
-                                        bottom={1}
-                                        left={0}
-                                        right={0}
-                                        colorScheme='brand'
-                                        m={1}
-                                        size={"sm"}
-                                        borderRadius={"10px"}
-                                        className='group-hover:opacity-0 transition-opacity duration-300'
-                                        bg={"dark.300"}
-                                        value={Math.floor(movie.timestamp! || 0)}
-                                        max={movie.finishTimestamp}
-                                    />
+                                {movie.type == "Movie" && (
+                                    <Progress
+                                    position="absolute"
+                                    bottom={1}
+                                    left={0}
+                                    right={0}
+                                    colorScheme='brand'
+                                    m={1}
+                                    size={"sm"}
+                                    borderRadius={"10px"}
+                                    className='group-hover:opacity-0 transition-opacity duration-300'
+                                    bg={"dark.300"}
+                                    value={Math.floor(movie.timestamp! || 0)}
+                                    max={movie.finishTimestamp}
+                                />
+                                )}
                             </Box>
                         </Box>
                         )
@@ -179,11 +181,11 @@ const ContinueWatching: React.FC<Props> = ({ onPlayClick }) => {
             </Slider>
 
             <MediaModal
-                isOpen={!!selectedMedia}
-                onClose={handleCloseModal}
-                media={selectedMedia!}
-                onPlayClick={handlePlayClick}
-            />
+        isOpen={!!selectedMedia}
+        onClose={handleCloseModal}
+        media={selectedMedia!}
+        onPlayClick={handlePlayClick}
+        /> 
         </div>
     );
 }

@@ -27,29 +27,32 @@ const TitleBar: React.FC = () => {
       bg={"dark.200"}
       className="draggable overflow-hidden"
     >
-      <Flex marginLeft={'auto'} gap={4}>
+      <Flex marginLeft={'auto'} gap={1}>
         <IconButton
           aria-label="Minimize"
+          borderRadius={0}
           icon={<FaMinus />}
           size="sm"
           variant="ghost"
           color={iconColor}
           cursor={'pointer'}
-          _hover={{ bg: 'gray.700' }}
+          _hover={{ bg: 'dark.300' }}
           onClick={handleMinimize}
         />
         <IconButton
           aria-label="Maximize"
+          borderRadius={0}
           icon={<FaRegSquare />}
           size="sm"
           variant="ghost"
           color={iconColor}
           cursor={'pointer'}
-          _hover={{ bg: 'gray.700' }}
+          _hover={{ bg: 'dark.300' }}
           onClick={handleMaximize}
         />
         <IconButton
           aria-label="Close"
+          borderRadius={0}
           icon={<FaTimes />}
           size="sm"
           variant="ghost"

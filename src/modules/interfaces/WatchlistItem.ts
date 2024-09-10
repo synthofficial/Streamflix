@@ -16,6 +16,8 @@ interface WatchlistItem {
         description?: string;
         thumbnail?: string;
         url?: string;
+        completed? : boolean;
+        timestamp? : number;
     }[];
     rating : number;
     production : string;

@@ -65,6 +65,20 @@ export const addToWatchingList = (item : WatchlistItem) => {
     }
 }
 
+export const updateEpisodeWatchTime = (id : string, episodeId : string, time : number, finishTime : number) => {
+    const watchlist = getWatchingList();
+    const index = watchlist.findIndex(item => item.id === id);
+    if(index !== -1){
+        const episodeIndex : number = watchlist[index].episodes?.findIndex(ep => ep.id === episodeId)!;
+        if(episodeIndex !== -1){
+            console.log(time, finishTime);
+            watchlist[index].episodes![episodeIndex].timestamp = time;
+            watchlist[index].episodes![episodeIndex].completed = time >= finishTime ? true : false;
+            localStorage.setItem("watchinglist", JSON.stringify(watchlist));
+        }
+    }
+}
+
 export const updateWatchingListMovieTime = (id : string, time : number) => {
     const watchlist = getWatchingList();
     const index = watchlist.findIndex(item => item.id === id);

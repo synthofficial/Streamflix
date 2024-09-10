@@ -20,10 +20,11 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Progress,
 } from '@chakra-ui/react';
 import { FaPlay, FaStar, FaClock, FaCalendar } from 'react-icons/fa';
 import { IoIosArrowDown } from 'react-icons/io';
-import { convertMinutesToHours, getWatchingList } from '../../../modules/functions';
+import { convertDurationToSeconds, convertMinutesToHours, getWatchingList, getWatchlist } from '../../../modules/functions';
 import { getEpisodeSource } from '../../../modules/api/Movies';
 import { getAnimeSource } from '../../../modules/api/Anime';
 
@@ -47,6 +48,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
   if (!media) return null;
   const [selectedRange, setSelectedRange] = useState<number>(0);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
+  const [watchList, setWatchlist] = useState<WatchlistItem[]>(getWatchlist());
   const [episodes, setEpisodes] = useState<any[]>([]);
   const toast = useToast();
 
@@ -151,9 +153,9 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="6xl" motionPreset="slideInBottom">
+    <Modal isOpen={isOpen} onClose={onClose} size="7xl" motionPreset="slideInTop">
       <ModalOverlay bg="blackAlpha.800" />
-      <ModalContent bg="transparent" overflow="hidden">
+      <ModalContent bg="transparent" overflow="hidden" padding={8}>
         <ModalBody p={0}>
           <Flex height="80vh" direction={isMovie ? 'column' : 'row'}>
             <Box 
@@ -165,7 +167,7 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
               <Image
                 src={media.cover}
                 alt={isAnime ? media.title.english : media.title.toString()}
-                objectFit="cover"
+                objectFit="fill"
                 w="100%"
                 h="100%"
               />
@@ -290,8 +292,14 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                       borderRadius: '24px',
                     },
                   }}>
-                    {filteredEpisodes.map((episode, index) => (
-                      <Flex
+                    {filteredEpisodes.map((episode, index) => {
+                                    const watchedEpisode = watchingList.find((item) => item.id === media.id)?.episodes?.find((ep) => ep.id === episode.id);
+                                    const watchedProgress = watchedEpisode ? watchedEpisode.timestamp : 0;
+                                    const totalDuration = convertDurationToSeconds(episode.duration || media.duration);
+                                    
+                                    console.log(`Episode ${episode.number} progress:`, watchedProgress, 'out of', totalDuration);
+                      return(
+                        <Flex
                         key={episode.id}
                         p={4}
                         borderBottom="1px solid"
@@ -309,6 +317,20 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                             height="100%"
                             borderRadius="md"
                           />
+                          <Progress
+                                        position="absolute"
+                                        bottom={1}
+                                        left={0}
+                                        right={0}
+                                        colorScheme='brand'
+                                        m={1}
+                                        size={"sm"}
+                                        borderRadius={"10px"}
+                                        className='group-hover:opacity-0 transition-opacity duration-300'
+                                        bg={"dark.300"}
+                                        value={watchedProgress}
+                                        max={convertDurationToSeconds(media.duration) as number}
+                                    />
                           <Flex
                             position="absolute"
                             top={0}
@@ -348,7 +370,8 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
                           </Text>
                         </Flex>
                       </Flex>
-                    ))}
+                      )
+                    })}
                   </Box>
                 </Flex>
               </Box>

@@ -9,7 +9,7 @@ import { getEpisodeSource } from "../modules/api/Movies";
 import discordRPCManager from "../constants/DiscordRPC";
 import { useVideoPlayer } from "../renderer/contexts/VideoPlayerContext";
 import { getAnimeSource } from "../modules/api/Anime";
-import { getWatchingList, isInWatchingList, isInWatchlist, updateWatchingListMovieTime, updateWatchlistMovieTime } from "../modules/functions";
+import { convertDurationToSeconds, getWatchingList, isInWatchingList, isInWatchlist, updateEpisodeWatchTime, updateWatchingListMovieTime, updateWatchlistMovieTime } from "../modules/functions";
 
 const convertSecondsToTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -29,8 +29,6 @@ const VideoPlayer: React.FC = () => {
         setCurrentEpisode,
         setCurrentUrl
     } = useVideoPlayer();
-
-    console.log(movieData, episodeData, episodeUrl);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const [hlsData, setHlsData] = useState<Hls>();
@@ -130,6 +128,7 @@ const VideoPlayer: React.FC = () => {
 
         const onTimeUpdate = () => {
             setCurrentTime(convertSecondsToTime(video.currentTime));
+
             if(isInWatchingList(movieData?.id as string)){
                 updateWatchingListMovieTime(movieData?.id as string, video.currentTime);
             }
@@ -156,9 +155,9 @@ const VideoPlayer: React.FC = () => {
 
     const handlePlayerClose = () => {
         setShowPlayer(false);
-        setCurrentMedia(null);
-        setCurrentEpisode(null);
-        setCurrentUrl(null);
+        if(movieData?.type === "Show"){
+            updateEpisodeWatchTime(movieData?.id as string, episodeData?.id, Math.floor(videoRef.current!.currentTime), convertDurationToSeconds(movieData?.duration) as number);
+        }
     };
 
     const handleFullscreen = () => {
