@@ -12,7 +12,7 @@ import { MediaProvider } from './contexts/MediaContext';
 import { useVideoPlayer, VideoPlayerProvider } from './contexts/VideoPlayerContext';
 import { getMediaInfo, searchMedia } from '../modules/api/Movies';
 import TitleBar from '../components/TitleBar';
-import { ipcRenderer } from 'electron';
+import { app, ipcRenderer } from 'electron';
 import UpdateModal from './pages/modals/UpdateModal';
 
 interface SearchResult {
@@ -112,9 +112,12 @@ const AppContent = () => {
             bg={bgColor}
             color="white"
           >
-              <Flex align="center" mr={5}>
+              <Flex align="center" direction={'column'} mr={5}>
                 <Box fontWeight="bold" fontSize="xl" color="brand.500">
                   Streamflix
+                </Box>
+                <Box ml={2} color="gray.400">
+                  v1.4.0
                 </Box>
               </Flex>
 
@@ -125,6 +128,7 @@ const AppContent = () => {
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
           onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+          borderColor={"brand.500"}
         />
         {searchTerm.length > 2 && (searchResults.length > 0 || isSearching) && isSearchFocused && (
           <Box
@@ -132,7 +136,7 @@ const AppContent = () => {
             top="100%"
             left="50%"
             transform="translateX(-50%)"
-            width="400px"
+            width="600px"
             bg="dark.200"
             mt={2}
             borderRadius="md"
@@ -148,7 +152,7 @@ const AppContent = () => {
                 <Flex
                   key={result.id}
                   p={2}
-                  _hover={{ bg: 'gray.600' }}
+                  _hover={{ bg: 'dark.300' }}
                   cursor="pointer"
                   onClick={() => {
                     console.log("Result clicked in render:", result.id);

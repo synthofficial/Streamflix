@@ -14,4 +14,8 @@ interface Movie {
     type : "Movie";
     thumbnail : string;
     episodes?: [];
+    subtitles : {
+        file : string;
+        label : string;
+    };
 }

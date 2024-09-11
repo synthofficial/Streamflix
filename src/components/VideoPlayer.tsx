@@ -5,7 +5,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { MdFullscreen, MdFullscreenExit } from "react-icons/md";
 import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute, FaVolumeDown } from "react-icons/fa";
 import { TbRewindBackward10, TbRewindForward10, TbPlayerTrackNextFilled } from "react-icons/tb";
-import { getEpisodeSource } from "../modules/api/Movies";
+import { getEpisodeSource, getEpisodeSubtitles } from "../modules/api/Movies";
 import discordRPCManager from "../constants/DiscordRPC";
 import { useVideoPlayer } from "../renderer/contexts/VideoPlayerContext";
 import { getAnimeSource } from "../modules/api/Anime";
@@ -17,6 +17,12 @@ const convertSecondsToTime = (seconds: number) => {
     const secs = Math.floor(seconds % 60);
     return `${hours > 0 ? `${hours}:` : ''}${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
+
+interface Cue {
+    start: number;
+    end: number;
+    text: string;
+  }
 
 const VideoPlayer: React.FC = () => {
     const { 
@@ -37,15 +43,20 @@ const VideoPlayer: React.FC = () => {
     const [duration, setDuration] = useState<string>("00:00");
     const [playing, setPlaying] = useState<boolean>(false);
     const [showControls, setShowControls] = useState<boolean>(false);
-    const [fullscreen, setFullscreen] = useState<boolean>(false);
+    const [fullscreen] = useState<boolean>(false);
     const [showVolume, setShowVolume] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(50);
     const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
+    const [subtitles, setSubtitles] = useState<Cue[]>([]);
+    const [currentSubtitle, setCurrentSubtitle] = useState<string>('');
+    const [subtitleUrl, setSubtitleUrl] = useState<string | null>(null);
 
     const watchingList = getWatchingList();
 
     const handleControlsVisibility = useCallback(() => {
-        setShowControls(true);
+        if (!showControls) {
+            setShowControls(true);
+        }
         
         if (hideTimeout) {
             clearTimeout(hideTimeout);
@@ -57,6 +68,95 @@ const VideoPlayer: React.FC = () => {
         
         setHideTimeout(newTimeout);
     }, [hideTimeout]);
+
+    useEffect(() => {
+        const fetchSubtitles = async () => {
+            if (episodeData && movieData) {
+                try {
+                    const subtitleData = await getEpisodeSubtitles(episodeData.id, movieData.id as string);
+                    console.log("Subtitle data:", subtitleData);
+                    if (subtitleData && subtitleData.file) {
+                        setSubtitleUrl(subtitleData.file);
+                        console.log("Subtitles URL:", subtitleData.file);
+                    } else {
+                        console.log("No subtitle URL available");
+                    }
+                } catch (error) {
+                    console.error("Error fetching subtitle URL:", error);
+                }
+            }else if(movieData){
+                if(movieData.type == "Movie" && movieData.subtitles.file){
+                    setSubtitleUrl(movieData.subtitles.file);
+                    console.log("Subtitles URL:", movieData.subtitles.file);
+                }
+            }
+        };
+        fetchSubtitles();
+    }, [episodeData, movieData]);
+    const parseWebVTT = (vttText: string): Cue[] => {
+        const lines = vttText.trim().split('\n');
+        const cues: Cue[] = [];
+        let currentCue: Partial<Cue> | null = null;
+    
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (line.includes('-->')) {
+            const [start, end] = line.split('-->').map(timeString => {
+              const [minutes, seconds] = timeString.trim().split(':');
+              return parseInt(minutes) * 60 + parseFloat(seconds);
+            });
+            currentCue = { start, end, text: '' };
+          } else if (currentCue) {
+            if (line !== '') {
+              currentCue.text += (currentCue.text ? '\n' : '') + line;
+            } else if (currentCue.text) {
+              cues.push(currentCue as Cue);
+              currentCue = null;
+            }
+          }
+        }
+        if (currentCue && currentCue.text) {
+          cues.push(currentCue as Cue);
+        }
+        return cues;
+      };
+
+      useEffect(() => {
+        const loadSubtitles = async () => {
+            if (subtitleUrl) {
+                try {
+                    const response = await fetch(subtitleUrl);
+                    const text = await response.text();
+                    const parsedCues = parseWebVTT(text);
+                    console.log("Parsed subtitles:", parsedCues);
+                    setSubtitles(parsedCues);
+                } catch (error) {
+                    console.error("Error loading subtitles:", error);
+                }
+            }
+        };
+
+        loadSubtitles();
+    }, [subtitleUrl]);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || subtitles.length === 0) return;
+      
+        const updateSubtitle = () => {
+          const currentTime = video.currentTime;
+          const currentCue = subtitles.find(
+            cue => currentTime >= cue.start && currentTime <= cue.end
+          );
+          setCurrentSubtitle(currentCue ? currentCue.text : '');
+        };
+      
+        video.addEventListener('timeupdate', updateSubtitle);
+      
+        return () => {
+          video.removeEventListener('timeupdate', updateSubtitle);
+        };
+      }, [subtitles]);
 
     useEffect(() => {
         const handleMouseMove = () => {
@@ -99,7 +199,7 @@ const VideoPlayer: React.FC = () => {
                 }
             });
             
-            if(watchingList.find((m) => m.id == movieData?.id)){
+            if(watchingList.find((m) => m.id == movieData?.id) && movieData?.type === "Movie"){
                 videoRef.current.currentTime = getWatchingList().find((m) => m.id == movieData?.id)?.timestamp || 0;
             }
 
@@ -228,7 +328,23 @@ const VideoPlayer: React.FC = () => {
             onMouseLeave={() => setShowControls(false)}
         >
             <video ref={videoRef} className="w-full h-full object-cover" />
-            
+            <Box
+        position="absolute"
+        bottom="10%"
+        left="50%"
+        transform="translateX(-50%)"
+        textAlign="center"
+        color="white"
+        fontSize="xl"
+        fontWeight="bold"
+        textShadow="0 0 4px black"
+        padding="0.5rem"
+        backgroundColor="rgba(0, 0, 0, 0.5)"
+        borderRadius="md"
+        maxWidth="80%"
+      >
+        {currentSubtitle.replaceAll(/(<([^>]+)>)/ig, "")}
+      </Box>
             <Box
                 position="absolute"
                 top="0"

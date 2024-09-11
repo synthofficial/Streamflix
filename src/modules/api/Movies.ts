@@ -9,8 +9,6 @@ import { fetchAnimeOrShowById } from "./Anilist";
 import { searchAnime } from "./Anime";
 
 const api = new MovieHdWatch();
-const flix = new FlixHQ();
-const fmovies = new Goku();
 
 interface FileData {
     file: string;
@@ -39,6 +37,7 @@ function getFileFromJson(jsonString: string): string | null {
 export const getMovieSource = async (episodeId: string, movieId: string) => {
     try {
         const servers = await api.fetchEpisodeServers(episodeId, movieId);
+        console.log(servers);
 
         if (servers.length > 0) {
             const url = servers.find((server) => server.url.includes("rabbitstream"))?.url;
@@ -64,11 +63,10 @@ export const getMovieSource = async (episodeId: string, movieId: string) => {
     }
 }
 
-export const getEpisodeSource = async(episodeId : string, movieId : string) => {
-    console.log(episodeId, movieId)
-    
-    try{
+export const getMovieSubtitles = async (episodeId : string, movieId: string) => {
+    try {
         const servers = await api.fetchEpisodeServers(episodeId, movieId);
+        console.log(servers);
 
         if (servers.length > 0) {
             const url = servers.find((server) => server.url.includes("rabbitstream"))?.url;
@@ -83,6 +81,37 @@ export const getEpisodeSource = async(episodeId : string, movieId : string) => {
                 return null;
             }
             const source = await axios.get(`https://api.fffapifree.cam/get-source?id=${match[1]}`);
+            console.log(source.data.data.tracks)
+            const data = source.data.data.tracks.find((label : any) => label.label.includes("English"));
+            return data
+        }
+        return null;
+    } catch (error) {
+        console.error("Error in getMovieSource:", error);
+        return null;
+    }
+}
+
+export const getEpisodeSource = async(episodeId : string, movieId : string) => {
+    console.log(episodeId, movieId)
+    
+    try{
+        const servers = await api.fetchEpisodeServers(episodeId, movieId);
+
+        if (servers.length > 0) {
+            const url = servers.find((server) => server.url.includes("rabbitstream"))?.url;
+            if (!url) {
+                console.log("No rabbitstream URL found");
+                return null;
+            }
+            const regex = /embed-4\/([a-zA-Z0-9_-]+)/;
+            const match = url.match(regex);
+            console.log(match![1])
+            if (!match) {
+                console.log("No match found in URL");
+                return null;
+            }
+            const source = await axios.get(`https://api.fffapifree.cam/get-source?id=${match[1]}`);
             const fileUrl = getFileFromJson(source.data.data.sources);
             return fileUrl;
         }
@@ -91,7 +120,35 @@ export const getEpisodeSource = async(episodeId : string, movieId : string) => {
         console.log(e)
         return null;
     }
+}
 
+export const getEpisodeSubtitles = async(episodeId : string, movieId : string) => {
+    try{
+        const servers = await api.fetchEpisodeServers(episodeId, movieId);
+
+        if (servers.length > 0) {
+            const url = servers.find((server) => server.url.includes("rabbitstream"))?.url;
+            if (!url) {
+                console.log("No rabbitstream URL found");
+                return null;
+            }
+            const regex = /embed-4\/([a-zA-Z0-9_-]+)/;
+            const match = url.match(regex);
+            console.log(match![1])
+            if (!match) {
+                console.log("No match found in URL");
+                return null;
+            }
+            const source = await axios.get(`https://api.fffapifree.cam/get-source?id=${match[1]}`);
+            console.log(source.data.data.tracks)
+            const data = source.data.data.tracks.find((label : any) => label.label.includes("English"));
+            return data
+        }
+        return null;
+    }catch(e){
+        console.log(e)
+        return null;
+    }
 }
 
 export const searchMedia = async (query: string): Promise<SearchResult[]> => {
@@ -179,6 +236,7 @@ export const getMediaInfo = async (id: string) => {
                     duration: data.duration as string,
                     rating: data.rating as number ?? "N/A",
                     production: data.production as string,
+                    subtitles: await getMovieSubtitles(data.episodes![0].id, data.id)
                 }
             case "TV Series":
 
@@ -245,6 +303,7 @@ export const getTopTrendingMovie = async () : Promise<Movie[]> => {
         releaseDate: movieData.releaseDate as string,
         type: "Movie",
         thumbnail: movieData.image as string,
+        subtitles: await getMovieSubtitles(movieData.episodes![0].id, movies[0].id)
     });
 
     return data;
@@ -273,6 +332,7 @@ export const getTrendingMovies = async () : Promise<Movie[]> => {
                 releaseDate: movieData.releaseDate as string,
                 type: "Movie",
                 thumbnail: movieData.image as string,
+                subtitles: await getMovieSubtitles(movieData.episodes![0].id, movie.id)
             }
         })
     );

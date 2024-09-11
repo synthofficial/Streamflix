@@ -24,7 +24,7 @@ import {
 } from '@chakra-ui/react';
 import { FaPlay, FaStar, FaClock, FaCalendar } from 'react-icons/fa';
 import { IoIosArrowDown } from 'react-icons/io';
-import { convertDurationToSeconds, convertMinutesToHours, getWatchingList, getWatchlist } from '../../../modules/functions';
+import { addToWatchingList, convertDurationToSeconds, convertMinutesToHours, getWatchingList, getWatchlist, isInWatchingList } from '../../../modules/functions';
 import { getEpisodeSource } from '../../../modules/api/Movies';
 import { getAnimeSource } from '../../../modules/api/Anime';
 
@@ -107,9 +107,34 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
       console.log("loading movie");
       onPlayClick(media, null, undefined);
     }
+    if(!isInWatchingList(media.id as string)){
+      addToWatchingList(
+        {
+          id: media.id as string,
+          title: media.type !== "Anime" ? media.title! : media.title!.english!,
+          movieUrl: media.type === "Movie" ? media.movieUrl : undefined,
+          thumbnail: media.type !== "Anime" ? media.thumbnail! : media.cover!,
+          cover: media.cover,
+          description: media.description,
+          genres: media.genres,
+          actors: media.type !== "Anime" ? media.actors : [],
+          country: media.type !== "Anime" ? media.country : [],
+          rating: media.rating,
+          production: media.production,
+          releaseDate: media.releaseDate,
+          duration: media.duration,
+          finishTimestamp: convertDurationToSeconds(media.duration) as number,
+          completed: false,
+          timesWatched: 0,
+          episodes: media.type !== "Movie" ? media.episodes : undefined,
+          type: media.type
+        }
+      )
+  }
   }
 
   const handleEpisodeClick = async (episode: Episode) => {
+    
     toast({
       title: "Fetching Episode URL...",
       description: "Please wait while we prepare your video.",
@@ -137,6 +162,30 @@ const MediaModal: React.FC<MediaModalProps> = ({ isOpen, onClose, media, onPlayC
           isClosable: true,
         });
         onPlayClick(media, episode, source);
+        if(!isInWatchingList(media.id as string)){
+          addToWatchingList(
+            {
+              id: media.id as string,
+              title: media.type !== "Anime" ? media.title! : media.title!.english!,
+              movieUrl: media.type === "Movie" ? media.movieUrl : undefined,
+              thumbnail: media.type !== "Anime" ? media.thumbnail! : media.cover!,
+              cover: media.cover,
+              description: media.description,
+              genres: media.genres,
+              actors: media.type !== "Anime" ? media.actors : [],
+              country: media.type !== "Anime" ? media.country : [],
+              rating: media.rating,
+              production: media.production,
+              releaseDate: media.releaseDate,
+              duration: media.duration,
+              finishTimestamp: convertDurationToSeconds(media.duration) as number,
+              completed: false,
+              timesWatched: 0,
+              episodes: media.type !== "Movie" ? media.episodes : undefined,
+              type: media.type
+            }
+          )
+      }
         onClose();
       } else {
         throw new Error("Failed to fetch episode URL");

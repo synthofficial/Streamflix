@@ -5,6 +5,10 @@
     </a>
 </div>
 
+**⚠️ 1.4.0 IS THE FINAL UPDATE FOR A WHILE. THE APP IS BEING REWORKED! ⚠️**
+
+I have decided to completely re-work this project, mainly because it is hard to add new features with all the useless code in this solution. I don't feel like going through each file and removing the useless code, and this gives me a chance to make a new UI that feels fresh 😃
+
 ## About the project
 I got tired of trying to watch stuff and constantly met with ads, so I made this program to start my journey in various tools.
 
